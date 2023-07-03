@@ -1,4 +1,5 @@
 const { faker } = require('@faker-js/faker');
+const boom = require('@hapi/boom');
 
 class CategoriesService {
 
@@ -14,7 +15,8 @@ class CategoriesService {
       this.categories.push({
         id: faker.datatype.uuid(),
         name: faker.commerce.department(),
-        description: faker.lorem.sentence()
+        description: faker.lorem.sentence(),
+        isBlock: faker.datatype.boolean()
       });
     }
   }
@@ -34,15 +36,26 @@ class CategoriesService {
     return newCategories;
   }
 
-  find() {
-    return this.categories;
+  async find() {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve(this.categories);
+      }, 5000);
+    });
   }
 
-  findOne(id) {
-    return this.categories.find(item => item.id === id);
+  async findOne(id) {
+    const categories = this.categories.find(item => item.id === id);
+    if (!categories) {
+      throw boom.notFound('category not found');
+    }
+    if (categories.isBlock) {
+      throw boom.conflict('category is blocked');
+    }
+    return categories;
   }
 
-  update(id, body) {
+  async update(id, body) {
     const categoryToEditIndex = this.#getIndexCategory(id);
 
     if (categoryToEditIndex !== -1) {
@@ -54,17 +67,19 @@ class CategoriesService {
         ...body
       };
       return true;
+    } else {
+      throw boom.notFound('category not found');
     }
-    return false;
   }
 
-  delete(id) {
+  async delete(id) {
     const categoryToDeleteIndex = this.#getIndexCategory(id);
     if (categoryToDeleteIndex !== -1) {
       this.categories.splice(categoryToDeleteIndex, 1);
       return true;
+    } else {
+      throw boom.notFound('category not found');
     }
-    return false;
   }
 }
 

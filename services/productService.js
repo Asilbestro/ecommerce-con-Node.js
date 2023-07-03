@@ -1,4 +1,5 @@
 const { faker } = require('@faker-js/faker');
+const boom = require('@hapi/boom');
 
 class ProductsService {
 
@@ -16,6 +17,7 @@ class ProductsService {
         name: faker.commerce.productName(),
         price: parseInt(faker.commerce.price(), 10),
         image: faker.image.imageUrl(),
+        isBlock: faker.datatype.boolean(),
       });
     }
   }
@@ -41,7 +43,7 @@ class ProductsService {
   //   });
   // }
 
-  create(body) {
+  async create(body) {
     const newProducts = {
       id: faker.datatype.uuid(),
       ...body
@@ -51,46 +53,64 @@ class ProductsService {
     return newProducts;
   }
 
-  find() {
-    return this.products;
+  async find() {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve(this.products);
+      }, 5000);
+    });
   }
 
-  findOne(id) {
-    return this.products.find(item => item.id === id);
+  async findOne(id) {
+    const product = this.products.find(item => item.id === id);
+    if (!product) {
+      throw boom.notFound('product not found');
+    }
+    if (product.isBlock) {
+      throw boom.conflict('product is blocked');
+    }
+    return product;
   }
 
-  update(id, body) {
+  async update(id, body) {
     const productToEditIndex = this.#getIndexProduct(id);
 
     if (productToEditIndex !== -1) {
-      // const productToEdit = this.#determineUpdateMethod(id, body);
-
-      // this.products[productToEditIndex] = {
-      //   id: productToEdit.id,
-      //   name: productToEdit.name,
-      //   price: productToEdit.price,
-      //   image: productToEdit.image
-      // };
-
       const oldProduct = this.products[productToEditIndex];
 
       // el spread operator ... lo que hace es poner todo igual a como está en el objeto
-      this.products[productToEditIndex] = {
+      return this.products[productToEditIndex] = {
         ...oldProduct,
         ...body
       };
-      return true;
+
+    } else {
+      throw boom.notFound('product not found');
     }
-    return false;
+    // const productToEditIndex = this.#getIndexProduct(id);
+
+    // if (productToEditIndex !== -1) {
+    //   const oldProduct = this.products[productToEditIndex];
+
+    //   this.products[productToEditIndex] = {
+    //     ...oldProduct,
+    //     ...body
+    //   };
+    //   return true;
+
+    // } else if (productToEditIndex === -1) {
+    //   throw new Error('Product not found');
+    // }
   }
 
-  delete(id) {
+  async delete(id) {
     const productToDeleteIndex = this.#getIndexProduct(id);
     if (productToDeleteIndex !== -1) {
       this.products.splice(productToDeleteIndex, 1);
       return true;
+    } else {
+      throw boom.notFound('product not found');
     }
-    return false;
   }
 }
 

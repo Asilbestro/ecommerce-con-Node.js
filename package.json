@@ -18,8 +18,8 @@
     "prettier": "^2.8.8"
   },
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js",
+    "dev": "nodemon api/index.js",
+    "start": "node api/index.js",
     "lint": "eslint"
   },
   "keywords": [],

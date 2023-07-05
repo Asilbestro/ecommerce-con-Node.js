@@ -1,11 +1,15 @@
 const { faker } = require('@faker-js/faker');
 const boom = require('@hapi/boom');
 
+const pool = require('../libs/postgresPool');
+
 class ProductsService {
 
   constructor() {
     this.products = [];
     this.generateProducts();
+    this.pool = pool;
+    this.pool.on('error', (err) => console.error(err));
   }
 
   generateProducts() {
@@ -27,22 +31,6 @@ class ProductsService {
     return this.products.findIndex(product => product.id === id);
   }
 
-  // determina si el body viene para editar por parte parcial o completo
-  // #determineUpdateMethod(id, body) {
-  //   const productToEdit = this.findOne(id);
-
-  //   const name = body.name ? body.name : productToEdit.name;
-  //   const price = body.price ? body.price : productToEdit.price;
-  //   const image = body.image ? body.image : productToEdit.image;
-
-  //   return ({
-  //     id: id,
-  //     name: name,
-  //     price: price,
-  //     image: image
-  //   });
-  // }
-
   async create(body) {
     const newProducts = {
       id: faker.datatype.uuid(),
@@ -54,11 +42,9 @@ class ProductsService {
   }
 
   async find() {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve(this.products);
-      }, 5000);
-    });
+    const query = 'SELECT * FROM tasks';
+    const response = await this.pool.query(query);
+    return response.rows;
   }
 
   async findOne(id) {

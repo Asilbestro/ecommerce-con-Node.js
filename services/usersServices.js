@@ -1,11 +1,17 @@
 const { faker } = require('@faker-js/faker');
+
 const boom = require('@hapi/boom');
+
+const pool = require('../libs/postgresPool');
+
 
 class UsersService {
 
   constructor() {
     this.users = [];
     this.generateUsers();
+    this.pool = pool;
+    this.pool.on('error', (err) => console.error(err));
   }
 
   generateUsers() {
@@ -14,7 +20,7 @@ class UsersService {
 
     for (let index = 0; index < limit; index++) {
       this.users.push({
-        id: faker.datatype.uuid(),
+        id: faker.string.uuid,
         fullName: faker.person.fullName(),
         email: faker.internet.email(),
         username: faker.internet.userName()
@@ -38,19 +44,18 @@ class UsersService {
   }
 
   async find() {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve(this.users);
-      }, 5000);
-    });
+    const query = 'SELECT * FROM tasks';
+    const response = await this.pool.query(query);
+    return response.rows;
   }
+
 
   async findOne(id) {
     const user = this.users.find(item => item.id === id);
     if (!user) {
       throw boom.notFound('user not found');
     }
-    return user
+    return user;
   }
 
   async update(id, body) {
@@ -65,7 +70,7 @@ class UsersService {
         ...body
       };
       return true;
-    }else{
+    } else {
       throw boom.notFound('user not found');
     }
   }
@@ -75,7 +80,7 @@ class UsersService {
     if (userToDeleteIndex !== -1) {
       this.users.splice(userToDeleteIndex, 1);
       return true;
-    }else{
+    } else {
       throw boom.notFound('user not found');
     }
   }
